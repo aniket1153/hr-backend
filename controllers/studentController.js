@@ -1,6 +1,7 @@
 import Student from '../models/Student.js';
 import mongoose from 'mongoose';
 import Company from '../models/Company.js';
+import InterviewCall from '../models/InterviewCall.js';
 // @desc    Create a new student
 export const createStudent = async (req, res) => {
   try {
@@ -53,40 +54,55 @@ export const getStudents = async (req, res) => {
 };
 
 // @desc    Get placed students
-
 export const getPlacedStudents = async (req, res) => {
   try {
-    const placedStudents = await Student.find({ placed: true });
+    // Find students who are marked as placed
+    const placedStudents = await Student.find({ isPlaced: true })
+      .select('_id name placedCompany.companyName')  // select only needed fields
+      .lean();
 
-    const result = await Promise.all(
-      placedStudents.map(async (student) => {
-        const interview = await InterviewCall.findOne({
-          placed: student._id
-        })
-        .populate("companyId", "companyName")
-        .populate("positionId", "position");
+    if (!placedStudents.length) {
+      return res.status(200).json([]);  // no placed students found
+    }
 
-        return {
-          id: student._id,
-          student: {
-            name: student.name,
-            email: student.email
-          },
-          company: {
-            name: interview?.companyId?.companyName || "N/A"
-          },
-          position: interview?.positionId?.position || "N/A",
-          placementDate: interview?.interviewDate || student.updatedAt
-        };
-      })
-    );
-
-    res.status(200).json(result);
+    res.status(200).json(placedStudents);
   } catch (error) {
-    console.error("Error fetching placed students:", error);
-    res.status(500).json({ message: "Failed to fetch placed students" });
+    console.error('Error fetching placed students:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
+
+// export const getPlacedStudents = async (req, res) => {
+//   try {
+//     const placedStudents = await Student.find({ placed: true });
+
+//     const result = await Promise.all(
+//       placedStudents.map(async (student) => {
+//         const interview = await InterviewCall.findOne({
+//           placed: student._id
+//         })
+//           .populate('companyId', 'companyName')
+//           .populate('positionId', 'position');
+
+//         return {
+//           id: student._id,
+//           name: student.name,
+//           email: student.email,
+//           rollNo: student.rollNo,
+//           department: student.department,
+//           company: interview?.companyId?.companyName || 'N/A',
+//           position: interview?.positionId?.position || 'N/A',
+//           placementDate: interview?.interviewDate || student.updatedAt,
+//         };
+//       })
+//     );
+
+//     res.status(200).json(result);
+//   } catch (error) {
+//     console.error('Error fetching placed students:', error);
+//     res.status(500).json({ message: 'Failed to fetch placed students' });
+//   }
+// };
 
 // export const getPlacedStudents = async (req, res) => {
 //   try {
@@ -110,57 +126,23 @@ export const getStudentById = async (req, res) => {
   }
 };
 
-// @desc    Update student
-// export const updateStudent = async (req, res) => {
-//   const { id } = req.params;
-//   const validStatuses = ["Applied", "Shortlisted", "Rejected", "On Hold", "Others"];
-
-//   if (!mongoose.Types.ObjectId.isValid(id)) {
-//     return res.status(400).json({ message: 'Invalid student ID' });
-//   }
-
-//   if (req.body.status && !validStatuses.includes(req.body.status)) {
-//     return res.status(400).json({ message: 'Invalid status value' });
-//   }
-
-//   try {
-//     const updateData = {};
-//     if (req.body.status) updateData.status = req.body.status;
-//     if (req.body.resumeUploaded !== undefined) updateData.resumeUploaded = req.body.resumeUploaded;
-//     if (req.body.appliedCompany !== undefined) updateData.appliedCompany = req.body.appliedCompany;
-//     if (req.body.name) updateData.name = req.body.name;
-//     if (req.body.email) updateData.email = req.body.email;
-//     if (req.body.contact) updateData.contact = req.body.contact;
-//     if (req.body.course) updateData.course = req.body.course;
-//     if (req.body.placed !== undefined) updateData.placed = req.body.placed;
-
-//     const updatedStudent = await Student.findByIdAndUpdate(
-//       id,
-//       updateData,
-//       { new: true, runValidators: true }
-//     );
-
-//     if (!updatedStudent) {
-//       return res.status(404).json({ message: 'Student not found' });
-//     }
-
-//     res.status(200).json(updatedStudent);
-//   } catch (error) {
-//     console.error('❌ Error while updating student:', error.message);
-//     res.status(500).json({ message: 'Internal Server Error' });
-//   }
-// }; 
 
 export const updateStudent = async (req, res) => {
-  const studentId = req.params.id;
-  const updates = req.body;
-
-  if (!mongoose.Types.ObjectId.isValid(studentId)) {
-    return res.status(400).json({ message: 'Invalid student ID' });
-  }
-
   try {
-    // 1️⃣ Update the student
+    const studentId = req.params.id;
+    const updates = req.body;
+    const sid = studentId.toString();
+
+    // Set placement status and placementDate
+    if (updates.status === 'Placed' || updates.placed === true) {
+      updates.placed = true;
+      updates.placementDate = new Date(); // match schema field name
+    } else {
+      updates.placed = false;
+      updates.placementDate = null;
+    }
+
+    // Update student
     const student = await Student.findByIdAndUpdate(
       studentId,
       updates,
@@ -168,43 +150,44 @@ export const updateStudent = async (req, res) => {
     );
 
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ error: 'Student not found' });
     }
 
-    // 2️⃣ Get the company and position
+    // Find company
     const company = await Company.findOne({ companyName: student.appliedCompany });
-    if (company) {
-      const position = company.positions.find(
-        (p) => p.positionName === student.position
-      );
-
-      if (position) {
-        const sid = student._id.toString();
-
-        // 3️⃣ Add student to placed array if status is "Placed"
-        if (updates.status === 'Placed' || updates.placed === true) {
-          if (!position.placed.map(String).includes(sid)) {
-            position.placed.push(student._id);
-            await company.save();
-          }
-        }
-
-        // 4️⃣ Remove from placed array if status is not placed
-        else if (updates.status !== 'Placed' || updates.placed === false) {
-          position.placed = position.placed.filter((id) => id.toString() !== sid);
-          await company.save();
-        }
-      }
+    if (!company) {
+      return res.status(404).json({ error: 'Company not found for this student' });
     }
 
-    res.status(200).json(student);
-  } catch (err) {
-    console.error('Error updating student:', err);
-    res.status(500).json({ message: 'Server error while updating student' });
+    // Find position
+    const position = company.positions.find(
+      (p) => p.positionName === student.position
+    );
+    if (!position) {
+      return res.status(404).json({ error: 'Position not found for this student in the company' });
+    }
+
+    // Sync placement
+    if (student.placed) {
+      if (!position.placed.map(String).includes(sid)) {
+        position.placed.push(student._id);
+      }
+    } else {
+      position.placed = position.placed.filter((id) => id.toString() !== sid);
+    }
+
+    await company.save();
+
+    res.status(200).json({ message: 'Student updated successfully', student });
+  } catch (error) {
+    console.error('Update student error:', error);
+    res.status(500).json({ error: 'Failed to update student' });
   }
 };
 
-// export const updateStudent = async (req, res) => {
+
+
+
 //   const studentId = req.params.id;
 //   const updates = req.body;
 
@@ -306,5 +289,54 @@ export const deleteStudent = async (req, res) => {
   } catch (error) {
     console.error('Delete error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+// studentController.js
+
+
+// Your other student related functions...
+
+export const placeStudent = async (req, res) => {
+  try {
+    const { studentId, interviewCallId, companyId, positionId, placementDate } = req.body;
+
+    if (!studentId || !interviewCallId || !companyId || !positionId || !placementDate) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // 1. Update InterviewCall placed array
+    const interviewCall = await InterviewCall.findById(interviewCallId);
+    if (!interviewCall) return res.status(404).json({ message: "Interview call not found" });
+
+    if (!interviewCall.placed.includes(studentId)) {
+      interviewCall.placed.push(studentId);
+      await interviewCall.save();
+    }
+
+    // 2. Update Company positions placed array
+    const company = await Company.findById(companyId);
+    if (!company) return res.status(404).json({ message: "Company not found" });
+
+    const position = company.positions.id(positionId);
+    if (!position) return res.status(404).json({ message: "Position not found in company" });
+
+    if (!position.placed.includes(studentId)) {
+      position.placed.push(studentId);
+      await company.save();
+    }
+
+    // 3. Update Student placed status and date
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    student.placed = true;
+    student.placementDate = placementDate;
+    await student.save();
+
+    return res.status(200).json({ message: "Student placement updated successfully" });
+
+  } catch (error) {
+    console.error("Error placing student:", error);
+    return res.status(500).json({ message: "Failed to place student" });
   }
 };

@@ -15,22 +15,42 @@
 
   // Get all interview calls
 
-export const getInterviewCalls = async (req, res) => {
+  export const getInterviewCalls = async (req, res) => {
   try {
     const interviewCalls = await InterviewCall.find()
-      .populate('companyId', 'companyName')
-      .populate('positionId', 'positionName')
-      .populate('studentId', 'name')
-      .populate('shortlisted', 'name')
-      .populate('placed', 'name')
-      .lean();
+      .populate('companyId', 'companyName')          // ✅ for company filter
+      .populate('positionId', 'positionName')        // optional
+      .populate('shortlisted', 'name')               // optional
+      .populate('placed', 'name')                    // ✅ needed
+      .populate({ path: 'resumes.student', select: 'name' }) // optional
+      .lean(); // use lean() to simplify objects
 
     res.json(interviewCalls);
   } catch (error) {
     console.error('Error fetching interview calls:', error);
-    res.status(500).json({ message: 'Server error fetching interview calls', error: error.message });
+    res.status(500).json({
+      message: 'Server error fetching interview calls',
+      error: error.message,
+    });
   }
 };
+
+
+//   try {
+//     const interviewCalls = await InterviewCall.find()
+//       .populate('companyId', 'companyName')
+//       .populate('positionId', 'positionName')
+//       .populate('shortlisted', 'name')
+//       .populate('placed', 'name')
+//       .populate({ path: 'resumes.student', select: 'name' }) // ✅ This is correct for nested population
+//       .lean();
+
+//     res.json(interviewCalls);
+//   } catch (error) {
+//     console.error('Error fetching interview calls:', error);
+//     res.status(500).json({ message: 'Server error fetching interview calls', error: error.message });
+//   }
+// };
 
 
 export const getInterviewDetailsById = async (req, res) => {
@@ -64,7 +84,7 @@ export const updateInterviewCall = async (req, res) => {
   }
 };
 
-// export const getInterviewCalls = async (req, res) => {
+
 //   try {
 //     console.log('Fetching interview calls...');
 //     const interviewCalls = await InterviewCall.find()
@@ -227,7 +247,7 @@ export const getInterviewCallsGroupedByCompany = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch interview calls grouped by company' });
   }
 };
-// export const getInterviewCallsGroupedByCompany = async (req, res) => {
+
 //   try {
 //     const calls = await InterviewCall.find()
 //       .populate('companyId', 'companyName')
