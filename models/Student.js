@@ -5,7 +5,11 @@ const studentSchema = mongoose.Schema({
   email: { type: String, required: true, unique: true },
   contact: { type: String },
   course: { type: String },
-  status: { type: String, default: 'Applied' }, // Applied, Shortlisted, etc.
+  status: {
+  type: String,
+  enum: ['applied', 'shortlisted', 'placed'],
+  default: 'applied'
+},
   placed: { type: Boolean, default: false },
   resumeUploaded: { type: Boolean, default: false },
   appliedCompany: { type: String, default: '' },    // company name

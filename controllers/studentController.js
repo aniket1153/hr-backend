@@ -340,3 +340,19 @@ export const placeStudent = async (req, res) => {
     return res.status(500).json({ message: "Failed to place student" });
   }
 };
+// controllers/studentController.js
+
+export const updateStudentStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const updatedStudent = await Student.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    res.json(updatedStudent);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update student status' });
+  }
+};
+
