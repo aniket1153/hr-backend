@@ -3,8 +3,14 @@ import mongoose from 'mongoose';
 const positionSchema = new mongoose.Schema({
   positionName: { type: String, required: true },
   openingDate:   { type: Date,   required: true },
-  placed:        [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }]  // ← added
+  placed:        [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+  status: {
+    type: String,
+    enum: ['Closed', 'On-going', 'Hold'],
+    default: 'On-going'
+  }
 });
+
 
 const companySchema = new mongoose.Schema({
   companyName:    { type: String, required: true },
