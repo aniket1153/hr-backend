@@ -5,7 +5,8 @@ import {
   getCompanyById,
   updateCompany,
   deleteCompany,
-  getCompaniesWithInterviewCalls
+  getCompaniesWithInterviewCalls,
+  updatePositionStatus   // <-- Import the new controller function
 } from '../controllers/companyController.js';
 import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
 
@@ -25,5 +26,9 @@ router.route('/:id')
 // New route: Get companies along with their interview calls
 router.route('/with-interview-calls')
   .get(protect, authorizeRoles('admin', 'super-admin', 'hr'), getCompaniesWithInterviewCalls);
+
+// NEW route: Update status of a position in a company
+router.route('/:companyId/positions/:positionId/status')
+  .put(protect, authorizeRoles('admin', 'super-admin', 'hr'), updatePositionStatus);
 
 export default router;

@@ -107,3 +107,34 @@ export const getCompaniesWithInterviewCalls = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching companies with interview calls' });
   }
 };
+// Update status of a position in a company
+export const updatePositionStatus = async (req, res) => {
+  const { companyId, positionId } = req.params;
+  const { status } = req.body;
+
+  if (!['Closed', 'On-going', 'Hold'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status value' });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(companyId) || !mongoose.Types.ObjectId.isValid(positionId)) {
+    return res.status(400).json({ message: 'Invalid company or position ID' });
+  }
+
+  try {
+    const company = await Company.findById(companyId);
+    if (!company) return res.status(404).json({ message: 'Company not found' });
+
+    // Find the position subdocument by ID
+    const position = company.positions.id(positionId);
+    if (!position) return res.status(404).json({ message: 'Position not found' });
+
+    // Update status and save
+    position.status = status;
+    await company.save();
+
+    res.status(200).json({ message: 'Status updated successfully', position });
+  } catch (err) {
+    console.error('Error updating position status:', err);
+    res.status(500).json({ message: 'Server error updating position status' });
+  }
+};
