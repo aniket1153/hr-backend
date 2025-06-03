@@ -108,6 +108,7 @@ export const getCompaniesWithInterviewCalls = async (req, res) => {
   }
 };
 // Update status of a position in a company
+// Update status of a position in a company
 export const updatePositionStatus = async (req, res) => {
   const { companyId, positionId } = req.params;
   const { status } = req.body;

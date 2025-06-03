@@ -28,7 +28,9 @@ router.route('/with-interview-calls')
   .get(protect, authorizeRoles('admin', 'super-admin', 'hr'), getCompaniesWithInterviewCalls);
 
 // NEW route: Update status of a position in a company
+// Update status of a position in a company
 router.route('/:companyId/positions/:positionId/status')
   .put(protect, authorizeRoles('admin', 'super-admin', 'hr'), updatePositionStatus);
+
 
 export default router;
