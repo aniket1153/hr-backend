@@ -8,7 +8,7 @@ import companyRoutes from './routes/companyRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import interviewCallRoutes from './routes/interviewCallRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
-
+import appliedStudentRoutes from './routes/appliedStudentRoutes.js';
 
 dotenv.config();
 
@@ -37,7 +37,7 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/interview-calls', interviewCallRoutes);
 app.use('/api/reports', reportRoutes);
-
+app.use('/api/applied-students', appliedStudentRoutes);
 // Root route for health check
 app.get('/', (req, res) => {
   res.send('🚀 Server is up and running!');
