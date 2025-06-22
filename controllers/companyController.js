@@ -139,3 +139,118 @@ export const updatePositionStatus = async (req, res) => {
     res.status(500).json({ message: 'Server error updating position status' });
   }
 };
+// export const getCompanyStats = async (req, res) => {
+//   try {
+//     const { date, month } = req.query;
+//     let filter = {};
+
+//     if (date) {
+//       const start = new Date(date);
+//       const end = new Date(date);
+//       end.setDate(end.getDate() + 1);
+//       filter.createdAt = { $gte: start, $lt: end };
+//     } else if (month) {
+//       const start = new Date(`${month}-01`);
+//       const end = new Date(start);
+//       end.setMonth(end.getMonth() + 1);
+//       filter.createdAt = { $gte: start, $lt: end };
+//     }
+
+//     const count = await Company.countDocuments(filter);
+//     res.json({ count });
+//   } catch (error) {
+//     res.status(500).json({ message: 'Error fetching company stats', error: error.message });
+//   }
+// };
+
+
+// export const getCompanyStats = async (req, res) => {
+//   try {
+//     const { date, month } = req.query;
+
+//     if (!date && !month) {
+//       return res.status(400).json({ message: 'Missing date or month parameter' });
+//     }
+
+//     let filter = {};
+
+//     if (date) {
+//       const start = new Date(date);
+//       const end = new Date(date);
+//       end.setDate(end.getDate() + 1);
+//       filter.createdAt = { $gte: start, $lt: end };
+//     } else if (month) {
+//       const start = new Date(`${month}-01`);
+//       const end = new Date(start);
+//       end.setMonth(end.getMonth() + 1);
+//       filter.createdAt = { $gte: start, $lt: end };
+//     }
+
+//     const count = await Company.countDocuments(filter);
+//     return res.status(200).json({ count });
+//   } catch (error) {
+//     console.error("Error fetching company stats:", error);
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+
+
+// GET /api/companies/stats?date=2025-06-21
+export const getCompanyStats = async (req, res) => {
+  try {
+    const { date, month } = req.query;
+
+    if (date) {
+      const start = new Date(date);
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+
+      const filter = {
+        positions: {
+          $elemMatch: {
+            openingDate: { $gte: start, $lte: end }
+          }
+        }
+      };
+
+      console.log("Searching for date:", date, filter);
+
+      const result = await Company.find(filter).limit(5);
+      console.log("Matched docs:", result);
+
+      const count = await Company.countDocuments(filter);
+      return res.json({ count });
+    }
+
+    if (month) {
+      const start = new Date(`${month}-01`);
+      const end = new Date(`${month}-31`);
+      end.setHours(23, 59, 59, 999);
+
+      const filter = {
+        positions: {
+          $elemMatch: {
+            openingDate: { $gte: start, $lte: end }
+          }
+        }
+      };
+
+      console.log("Searching for month:", month, filter);
+
+      const result = await Company.find(filter).limit(5);
+      console.log("Matched docs:", result);
+
+      const count = await Company.countDocuments(filter);
+      return res.json({ count });
+    }
+
+    res.status(400).json({ message: "Missing date or month" });
+
+  } catch (err) {
+    console.error("Server error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+

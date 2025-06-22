@@ -311,3 +311,31 @@ export const getInterviewCallById = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+
+
+
+
+export const getInterviewCallStats = async (req, res) => {
+  try {
+    const { date, month } = req.query;
+    let filter = {};
+
+    if (date) {
+      const start = new Date(date);
+      const end = new Date(date);
+      end.setDate(end.getDate() + 1);
+      filter.createdAt = { $gte: start, $lt: end };
+    } else if (month) {
+      const start = new Date(`${month}-01`);
+      const end = new Date(start);
+      end.setMonth(end.getMonth() + 1);
+      filter.createdAt = { $gte: start, $lt: end };
+    }
+
+    const count = await InterviewCall.countDocuments(filter);
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching interview call stats', error: error.message });
+  }
+};
