@@ -1,5 +1,6 @@
 import AppliedStudent from '../models/AppliedStudent.js';
 import Student from '../models/Student.js';
+import Company from '../models/Company.js';
 
 export const applyStudentsToCompany = async (req, res) => {
   try {
@@ -9,24 +10,37 @@ export const applyStudentsToCompany = async (req, res) => {
       return res.status(400).json({ message: 'Missing data' });
     }
 
+    const company = await Company.findById(companyId);
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
     const appliedStudents = await Promise.all(
       studentIds.map(async (sid) => {
-        // Optional: check if already applied
         const exists = await AppliedStudent.findOne({ studentId: sid, companyId, positionId });
+
         if (!exists) {
-          return AppliedStudent.create({
+          await AppliedStudent.create({
             studentId: sid,
             companyId,
-            positionId
+            positionId,
           });
         }
-        return null;
+
+        // ✅ Update Student model fields here
+        await Student.findByIdAndUpdate(sid, {
+          status: 'applied',
+          appliedCompany: company.companyName,
+          position: company.position, // optional
+        });
+
+        return sid;
       })
     );
 
     res.status(201).json({
-      message: 'Students successfully applied',
-      data: appliedStudents.filter(Boolean)
+      message: 'Students successfully applied and updated',
+      data: appliedStudents.filter(Boolean),
     });
 
   } catch (error) {
