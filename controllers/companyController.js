@@ -48,17 +48,18 @@ export const getCompanies = async (req, res) => {
 export const getRecentCompany = async (req, res) => {
   try {
     const recentCompany = await Company.findOne()
-      .sort({ updatedAt: -1 }) // latest updated or created
+      .sort({ updatedAt: -1 })  // Get the most recently updated/created
+      .populate('positions.placed', 'name rollNo') // optional: show placed students
       .lean();
 
     if (!recentCompany) {
-      return res.status(200).json({ company: null });
+      return res.status(404).json({ message: "No recent company found." });
     }
 
-    return res.status(200).json({ company: recentCompany });
-  } catch (error) {
-    console.error("❌ Error in getRecentCompany:", error);
-    return res.status(500).json({ message: "Failed to fetch recent company." });
+    res.status(200).json({ company: recentCompany });
+  } catch (err) {
+    console.error("❌ Error fetching recent company:", err);
+    res.status(500).json({ message: "Server error while fetching recent company." });
   }
 };
 
