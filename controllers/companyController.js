@@ -16,7 +16,7 @@ export const createCompany = async (req, res) => {
 // Get all companies
 // Get all companies (with optional status filter)
 // ✅ Get recently updated company
-const getCompanies = async (req, res) => {
+ export const getCompanies = async (req, res) => {
   try {
     const recentCompany = await Company.findOne()
       .sort({ updatedAt: -1 })
@@ -33,6 +33,7 @@ const getCompanies = async (req, res) => {
     return res.status(500).json({ message: "Failed to fetch companies." });
   }
 };
+
 
 
 // export const getCompanies = async (req, res) => {
