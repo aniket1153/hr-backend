@@ -16,11 +16,39 @@ export const createCompany = async (req, res) => {
 // Get all companies
 // Get all companies (with optional status filter)
 // ✅ Get recently updated company
- export const getCompanies = async (req, res) => {
+//  export const getCompanies = async (req, res) => {
+//   try {
+//     const recentCompany = await Company.findOne()
+//       .sort({ updatedAt: -1 })
+//       .populate('positions interviewCalls') // adjust as per your schema
+//       .lean();
+
+//     if (!recentCompany) {
+//       return res.status(200).json({ company: null });
+//     }
+
+//     return res.status(200).json({ company: recentCompany });
+//   } catch (error) {
+//     console.error("❌ Error in getCompanies:", error);
+//     return res.status(500).json({ message: "Failed to fetch companies." });
+//   }
+// };
+
+
+
+export const getCompanies = async (req, res) => {
+  try {
+    const companies = await Company.find().sort({ createdAt: -1 });
+    res.json(companies);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching companies', error: err.message });
+  }
+};
+// Get the most recently created or updated company
+export const getRecentCompany = async (req, res) => {
   try {
     const recentCompany = await Company.findOne()
-      .sort({ updatedAt: -1 })
-      .populate('positions interviewCalls') // adjust as per your schema
+      .sort({ updatedAt: -1 }) // latest updated or created
       .lean();
 
     if (!recentCompany) {
@@ -29,21 +57,11 @@ export const createCompany = async (req, res) => {
 
     return res.status(200).json({ company: recentCompany });
   } catch (error) {
-    console.error("❌ Error in getCompanies:", error);
-    return res.status(500).json({ message: "Failed to fetch companies." });
+    console.error("❌ Error in getRecentCompany:", error);
+    return res.status(500).json({ message: "Failed to fetch recent company." });
   }
 };
 
-
-
-// export const getCompanies = async (req, res) => {
-//   try {
-//     const companies = await Company.find().sort({ createdAt: -1 });
-//     res.json(companies);
-//   } catch (err) {
-//     res.status(500).json({ message: 'Error fetching companies', error: err.message });
-//   }
-// };
 
 // Get company by ID
 export const getCompanyById = async (req, res) => {

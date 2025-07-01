@@ -7,7 +7,8 @@ import {
   deleteCompany,
   getCompaniesWithInterviewCalls,
   updatePositionStatus,
-  getCompanyStats
+  getCompanyStats,
+   getRecentCompany
 } from '../controllers/companyController.js';
 
 import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
@@ -16,6 +17,7 @@ const router = express.Router();
 
 // ✅ Place /stats route BEFORE /:id
 router.get('/stats', protect, authorizeRoles('admin', 'super-admin', 'hr'), getCompanyStats);
+router.get('/recent', protect, authorizeRoles('admin', 'super-admin', 'hr'), getRecentCompany);
 
 // Get all companies and create a new company
 router.route('/')
