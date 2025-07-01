@@ -15,25 +15,25 @@ export const createCompany = async (req, res) => {
 
 // Get all companies
 // Get all companies (with optional status filter)
-export const getCompanies = async (req, res) => {
+// ✅ Get recently updated company
+const getCompanies = async (req, res) => {
   try {
-    const { status } = req.query;
-    let filter = {};
+    const recentCompany = await Company.findOne()
+      .sort({ updatedAt: -1 })
+      .populate('positions interviewCalls') // adjust as per your schema
+      .lean();
 
-    if (status && ['Closed', 'On-going', 'Hold'].includes(status)) {
-      filter = {
-        positions: {
-          $elemMatch: { status }
-        }
-      };
+    if (!recentCompany) {
+      return res.status(200).json({ company: null });
     }
 
-    const companies = await Company.find(filter).sort({ createdAt: -1 });
-    res.json(companies);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching companies', error: err.message });
+    return res.status(200).json({ company: recentCompany });
+  } catch (error) {
+    console.error("❌ Error in getCompanies:", error);
+    return res.status(500).json({ message: "Failed to fetch companies." });
   }
 };
+
 
 // export const getCompanies = async (req, res) => {
 //   try {
