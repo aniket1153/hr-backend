@@ -14,14 +14,35 @@ export const createCompany = async (req, res) => {
 };
 
 // Get all companies
+// Get all companies (with optional status filter)
 export const getCompanies = async (req, res) => {
   try {
-    const companies = await Company.find().sort({ createdAt: -1 });
+    const { status } = req.query;
+    let filter = {};
+
+    if (status && ['Closed', 'On-going', 'Hold'].includes(status)) {
+      filter = {
+        positions: {
+          $elemMatch: { status }
+        }
+      };
+    }
+
+    const companies = await Company.find(filter).sort({ createdAt: -1 });
     res.json(companies);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching companies', error: err.message });
   }
 };
+
+// export const getCompanies = async (req, res) => {
+//   try {
+//     const companies = await Company.find().sort({ createdAt: -1 });
+//     res.json(companies);
+//   } catch (err) {
+//     res.status(500).json({ message: 'Error fetching companies', error: err.message });
+//   }
+// };
 
 // Get company by ID
 export const getCompanyById = async (req, res) => {
