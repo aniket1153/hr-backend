@@ -45,23 +45,42 @@ export const getCompanies = async (req, res) => {
   }
 };
 // Get the most recently created or updated company
+// export const getRecentCompany = async (req, res) => {
+//   try {
+//     const recentCompany = await Company.findOne()
+//       .sort({ updatedAt: -1 })  // Get the most recently updated/created
+//       .populate('positions.placed', 'name rollNo') // optional: show placed students
+//       .lean();
+
+//     if (!recentCompany) {
+//       return res.status(404).json({ message: "No recent company found." });
+//     }
+
+//     res.status(200).json({ company: recentCompany });
+//   } catch (err) {
+//     console.error("❌ Error fetching recent company:", err);
+//     res.status(500).json({ message: "Server error while fetching recent company." });
+//   }
+// };
+// GET /api/companies/recent
 export const getRecentCompany = async (req, res) => {
   try {
-    const recentCompany = await Company.findOne()
-      .sort({ updatedAt: -1 })  // Get the most recently updated/created
-      .populate('positions.placed', 'name rollNo') // optional: show placed students
+    const recentCompanies = await Company.find()
+      .sort({ updatedAt: -1 })  // ✅ Return all companies, most recent first
+      .populate('positions.placed', 'name rollNo')  // optional: include placed students
       .lean();
 
-    if (!recentCompany) {
-      return res.status(404).json({ message: "No recent company found." });
+    if (!recentCompanies || recentCompanies.length === 0) {
+      return res.status(404).json({ message: "No companies found." });
     }
 
-    res.status(200).json({ company: recentCompany });
+    res.status(200).json({ companies: recentCompanies });  // ✅ changed from "company" to "companies"
   } catch (err) {
-    console.error("❌ Error fetching recent company:", err);
-    res.status(500).json({ message: "Server error while fetching recent company." });
+    console.error("❌ Error fetching companies:", err);
+    res.status(500).json({ message: "Server error while fetching companies." });
   }
 };
+
 
 
 // Get company by ID
@@ -295,3 +314,39 @@ export const getCompanyStats = async (req, res) => {
 };
 
 
+// controllers/companyController.js
+
+export const addPositionToCompany = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const { positionName, openingDate } = req.body;
+
+    const company = await Company.findById(companyId);
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    // Create new position object
+    const newPosition = {
+      positionName,
+      openingDate,
+      status: 'On-going',
+      placed: []
+    };
+
+    // ✅ Add position
+    company.positions.push(newPosition);
+
+    // ✅ Update lastOpeningDate and updatedAt
+    company.lastOpeningDate = new Date(openingDate);
+    company.updatedAt = new Date(); // this is optional if you have timestamps enabled
+
+    // ✅ Save updated company
+    await company.save();
+
+    res.status(200).json({ message: 'Position added and company updated', company });
+  } catch (error) {
+    console.error('Error adding position:', error);
+    res.status(500).json({ message: 'Server error while adding position' });
+  }
+};

@@ -18,6 +18,9 @@ const router = express.Router();
 // ✅ Place /stats route BEFORE /:id
 router.get('/stats', protect, authorizeRoles('admin', 'super-admin', 'hr'), getCompanyStats);
 router.get('/recent', protect, authorizeRoles('admin', 'super-admin', 'hr'), getRecentCompany);
+// routes/companyRoutes.js
+
+
 
 // Get all companies and create a new company
 router.route('/')
