@@ -23,6 +23,7 @@ router.route('/placed')
   .get(protect, authorizeRoles('admin', 'super-admin', 'hr'), getPlacedStudents);
 
 // Route to get, update, and delete a single student by ID
+router.get('/:id', getStudentById);
 router.route('/:id')
   .get(protect, authorizeRoles('admin', 'super-admin', 'hr'), getStudentById)
   .patch(protect, authorizeRoles('admin', 'super-admin', 'hr'), updateStudent)
