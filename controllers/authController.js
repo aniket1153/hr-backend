@@ -13,25 +13,22 @@ const generateToken = (user) => {
 // POST /login handler
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  console.log('LOGIN_ATTEMPT:', { email, password });
 
   try {
-    // Find user by email
     const user = await User.findOne({ email });
-
     if (!user) {
+      console.log('USER_NOT_FOUND');
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Compare password using matchPassword method
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
+      console.log('PASSWORD_MISMATCH');
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token
     const token = generateToken(user);
-
-    // Send user details (no "name" field here)
     res.json({
       id: user._id,
       email: user.email,
@@ -43,3 +40,4 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
