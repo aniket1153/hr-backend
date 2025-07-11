@@ -1,12 +1,12 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';  // Your Mongoose User model
 
-// Generate JWT token with user ID and role included
+// Generate JWT token with user ID and role
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, role: user.role },  // Include user role here for authorization checks
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: '1d' }  // Token valid for 1 day
+    { expiresIn: '1d' }
   );
 };
 
@@ -22,19 +22,18 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Verify password (assuming your User model has a method `matchPassword`)
+    // Compare password using matchPassword method
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token including user role
+    // Generate JWT token
     const token = generateToken(user);
 
-    // Respond with user info and token
+    // Send user details (no "name" field here)
     res.json({
       id: user._id,
-      name: user.name,
       email: user.email,
       role: user.role,
       token,

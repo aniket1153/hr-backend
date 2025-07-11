@@ -1,10 +1,21 @@
-import mongoose from 'mongoose'; 
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    match: [/.+\@.+\..+/, 'Please fill a valid email address']
+  },
   password: { type: String, required: true },
-  role: { type: String, enum: ['super-admin', 'hr-admin', 'student'], required: true }
+  role: {
+    type: String,
+    enum: ['super-admin', 'hr-admin', 'student'],
+    required: true
+  }
 });
 
 // Hash password before saving
